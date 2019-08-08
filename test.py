@@ -14,12 +14,18 @@ torch.testing.assert_allclose(torch.mm(a,b), torch.ops.julia.mm(a,b), atol=0.001
 
 import time
 
+warmup = 10
+run = 100
+for i in range(warmup):
+  _ = torch.mm(a,b)
 t = time.time()
-for i in range(10):
+for i in range(run):
   _ = torch.mm(a,b)
 print("torch", time.time() - t)
+for i in range(warmup):
+  _ = torch.ops.julia.mm(a,b)
 t = time.time()
-for i in range(10):
+for i in range(run):
   _ = torch.ops.julia.mm(a,b)
 print("julia", time.time() - t)
 print("passed.")
