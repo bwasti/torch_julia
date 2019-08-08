@@ -1,0 +1,4 @@
+name = "TorchReg"
+uuid = "59ab4124-b980-11e9-2339-e5138845124c"
+authors = ["Bram Wasti <bwasti@fb.com>"]
+version = "0.1.0"
