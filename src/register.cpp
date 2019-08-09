@@ -106,9 +106,6 @@ void load_module(std::string fn, std::string module_name = "") {
 }
 
 void import_function(std::string func_name, size_t num_args) {
-  // NB: We assume all julia ops are pure
-  auto options = c10::OperatorOptions();
-  options.setAliasAnalysis(AliasAnalysisKind::PURE);
   jl_value_t *func =
       jl_get_global(jl_main_module, jl_symbol(func_name.c_str()));
   std::vector<Argument> args;
@@ -116,11 +113,13 @@ void import_function(std::string func_name, size_t num_args) {
     args.emplace_back(std::string("arg_") + std::to_string(i),
                       getTypePtr<at::Tensor>());
   }
+  // NB: We assume all julia ops are pure
+  auto options = c10::OperatorOptions();
+  options.setAliasAnalysis(AliasAnalysisKind::PURE);
   auto torch_operator = Operator(
       FunctionSchema("julia::" + func_name, "", args, {}, false, true),
       [func, num_args](Stack &stack) {
         // RECORD_FUNCTION("julia::" + fn, std::vector<c10::IValue>());
-        // std::vector<jl_value_t*> jl_args;
         jl_value_t **jl_args;
         JL_GC_PUSHARGS(jl_args, num_args);
         for (auto i = 0; i < num_args; ++i) {
@@ -141,7 +140,7 @@ void import_function(std::string func_name, size_t num_args) {
         auto var = torch::autograd::make_variable(tensor);
         stack.push_back(IValue(var));
         return 0;
-      });
+      }, options);
   RegisterOperators torch_register_ops(std::vector<Operator>{torch_operator});
 }
 
